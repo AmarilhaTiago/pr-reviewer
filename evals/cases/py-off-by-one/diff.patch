@@ -1,0 +1,15 @@
+diff --git a/app/stats.py b/app/stats.py
+--- a/app/stats.py
++++ b/app/stats.py
+@@ -3,3 +3,11 @@
+     for value in values:
+         result += value
+     return result
++
++
++def moving_sums(values: list[int], window: int) -> list[int]:
++    """Sum of every run of `window` consecutive items."""
++    sums = []
++    for i in range(len(values) - window):
++        sums.append(sum(values[i : i + window]))
++    return sums

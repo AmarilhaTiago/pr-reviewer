@@ -1,0 +1,17 @@
+diff --git a/app/Support/PathGuard.php b/app/Support/PathGuard.php
+--- a/app/Support/PathGuard.php
++++ b/app/Support/PathGuard.php
+@@ -8,4 +8,13 @@
+     {
+         return '/' . ltrim($path, '/');
+     }
++
++    public function isAdminPath(string $path): bool
++    {
++        if (strpos($path, '/admin') == false) {
++            return false;
++        }
++
++        return true;
++    }
+ }

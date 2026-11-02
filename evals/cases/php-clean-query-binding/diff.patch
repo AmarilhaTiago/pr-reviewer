@@ -1,0 +1,13 @@
+diff --git a/app/Repositories/ProductRepository.php b/app/Repositories/ProductRepository.php
+--- a/app/Repositories/ProductRepository.php
++++ b/app/Repositories/ProductRepository.php
+@@ -10,4 +10,9 @@
+     {
+         return DB::table('products')->where('id', $id)->first();
+     }
++
++    public function findBySku(string $sku): ?object
++    {
++        return DB::table('products')->where('sku', $sku)->first();
++    }
+ }

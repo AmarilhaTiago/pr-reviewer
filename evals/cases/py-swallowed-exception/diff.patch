@@ -1,0 +1,15 @@
+diff --git a/app/importer.py b/app/importer.py
+--- a/app/importer.py
++++ b/app/importer.py
+@@ -4,3 +4,11 @@
+ def load_config(path: str) -> dict:
+     with open(path, encoding="utf-8") as handle:
+         return json.load(handle)
++
++
++def load_optional(path: str) -> dict:
++    try:
++        return load_config(path)
++    except Exception:
++        pass
++    return {}

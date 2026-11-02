@@ -1,0 +1,17 @@
+diff --git a/app/exports.py b/app/exports.py
+--- a/app/exports.py
++++ b/app/exports.py
+@@ -3,3 +3,13 @@
+ 
+ def fetch_orders(conn: sqlite3.Connection) -> list[tuple]:
+     return conn.execute("SELECT id, customer_id FROM orders").fetchall()
++
++
++def orders_with_customers(conn: sqlite3.Connection) -> list[dict]:
++    rows = []
++    for order_id, customer_id in fetch_orders(conn):
++        customer = conn.execute(
++            "SELECT name FROM customers WHERE id = ?", (customer_id,)
++        ).fetchone()
++        rows.append({"order": order_id, "customer": customer[0]})
++    return rows

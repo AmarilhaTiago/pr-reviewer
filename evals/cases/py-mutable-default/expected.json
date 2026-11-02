@@ -1,0 +1,9 @@
+{
+  "expected": [
+    {
+      "file": "app/cart.py",
+      "line": 10,
+      "category": "bug"
+    }
+  ]
+}

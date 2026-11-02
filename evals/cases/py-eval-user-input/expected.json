@@ -1,0 +1,9 @@
+{
+  "expected": [
+    {
+      "file": "app/calc.py",
+      "line": 11,
+      "category": "security"
+    }
+  ]
+}

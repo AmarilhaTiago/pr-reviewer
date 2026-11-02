@@ -1,0 +1,9 @@
+{
+  "expected": [
+    {
+      "file": "app/Http/Controllers/ProfileController.php",
+      "line": 17,
+      "category": "convention"
+    }
+  ]
+}

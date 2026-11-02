@@ -1,0 +1,9 @@
+{
+  "expected": [
+    {
+      "file": "app/Services/PaymentGateway.php",
+      "line": 7,
+      "category": "security"
+    }
+  ]
+}

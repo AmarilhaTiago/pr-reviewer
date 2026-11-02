@@ -1,0 +1,11 @@
+diff --git a/resources/views/comments/show.blade.php b/resources/views/comments/show.blade.php
+--- a/resources/views/comments/show.blade.php
++++ b/resources/views/comments/show.blade.php
+@@ -1,6 +1,6 @@
+ <h2>{{ $post->title }}</h2>
+ <ul>
+ @foreach ($post->comments as $comment)
+-    <li>{{ $comment->author }}</li>
++    <li>{{ $comment->author }}: {!! $comment->body !!}</li>
+ @endforeach
+ </ul>
