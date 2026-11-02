@@ -6,6 +6,10 @@ First-pass pull request review with an LLM: inline comments and an idempotent su
 
 **Live demo:** [PR #41](https://github.com/AmarilhaTiago/pr-reviewer/pull/41) is a real pull request with deliberately planted bugs, reviewed by this action: inline comments on the SQL injection and the mutable default argument, plus the summary comment that is updated (not duplicated) on every push. Its red `test` check is intentional: the repo's own linter also flags the planted bug, and the PR is never merged.
 
+![Inline review comments on the planted SQL injection and mutable default](docs/img/demo-inline-comments.png)
+
+![Summary comment with the severity table, tokens and cost](docs/img/demo-summary.png)
+
 ## Why it exists
 
 Human reviewers spend their time on the obvious: a missing escape, a query in a loop, a swallowed exception. `pr-reviewer` takes a first pass so the person can focus on design and intent. It does **not** replace the human review. It is a public, from-scratch version of the review pipeline I run as a tech lead.
@@ -35,22 +39,31 @@ flowchart LR
 
 Eval suite: 16 cases (13 with a planted bug, 3 clean), PHP/Laravel and Python, covering security, bugs, performance and team conventions. A finding counts as correct when it hits the same file, the same category and a line within ±3.
 
-Measured on 2026-11-02 with `reviewer evals` (raw output in [`evals/results/`](evals/results)), both models on their free tiers:
+Measured on 2026-11-02 with `reviewer evals` (raw JSON in [`evals/results/`](evals/results)), both models on their free tiers, 2 runs of each prompt version:
 
-| Model | Precision | Recall | False-positive rate (clean cases) | Avg API latency/case | Tokens (in / out, 16 cases) | Billed cost |
-|---|---|---|---|---|---|---|
-| gemini-3.5-flash-lite | 100% (12/12) | 92% (12/13) | 0% (0/3) | 1.6 s | 13.6k / 1.9k | US$ 0 |
-| openai/gpt-oss-120b (Groq) | 79% (11/14) | 85% (11/13) | 0% (0/3) | 1.8 s | 19.2k / 9.6k | US$ 0 |
+| Model | Prompt | Precision | Recall | False-positive rate (clean cases) | Avg API latency/case |
+|---|---|---|---|---|---|
+| gemini-3.5-flash-lite | hunk headers only (2 runs, same totals) | 100% | 92% | 0% | 1.6 s |
+| gemini-3.5-flash-lite | **numbered lines**, run 1 | 100% | 100% | 0% | 1.3 s |
+| gemini-3.5-flash-lite | **numbered lines**, run 2 | 100% | 77% | 0% | 1.3 s |
+| openai/gpt-oss-120b (Groq) | hunk headers only (2 runs, same totals) | 79% | 85% | 0% | 1.8 s |
+| openai/gpt-oss-120b (Groq) | **numbered lines**, run 1 | 87% | 100% | 0% | 1.7 s |
+| openai/gpt-oss-120b (Groq) | **numbered lines**, run 2 | 86% | 92% | 0% | 1.5 s |
 
-What the table does not show:
-- **Gemini** missed one case in both runs: `php-inline-validation`, the "use Form Requests, not inline validation" team rule.
-- **Groq** produced the same totals in two runs, but the missed cases were *different* ones each time (e.g. `php-inline-validation` and `py-swallowed-exception` in the first, `py-eval-user-input` and `py-off-by-one` in the second). In the second run both misses were **line-number errors**: it named the right problem with the right category but cited line 6 instead of 11 (the diff it receives has hunk headers but no per-line numbers, so the model has to count; I have not yet tested whether numbering the lines fixes this). The matcher allows ±3 lines, so these count as a miss plus a false positive. It also spends about 5x more output tokens (reasoning).
-- Latency is the API call time only; the waits that keep Groq under its free-tier limit (8K tokens/minute) are not counted.
+Every case costs US$ 0 (free tiers). Each run is 13 planted bugs + 3 clean cases; recall is out of 13 findings, precision out of everything the model reported.
+
+**What changed between the two prompt versions.** In the first Groq runs, two misses were **line-number errors**: the model named the right problem with the right category but cited line 6 instead of 11, because the diff only had hunk headers and it had to count. The prompt now prefixes every added/context line with its line number in the new file ([card #44](docs/cards/044-line-numbers)).
+
+How to read the table:
+- **Groq improved in both runs** (recall 85% to 100% / 92%, precision 79% to 87% / 86%), and those two line-number misses are gone. Its remaining false positives are extra findings (for example a possible `None` access in `py-query-in-loop`), not wrong lines.
+- **Gemini is inconclusive.** Recall was 100% in one run and 77% in the other, against 92% twice before. That spread is larger than any effect of the change. In the 77% run the three missed cases got no finding at all (zero false positives), so the cause is the model staying silent, not wrong lines.
+- Groq spends about 4–5x more output tokens than Gemini (reasoning). Latency is API call time only; the waits that keep Groq under its free-tier limit (8K tokens/minute) are not counted.
+- Before-change raw JSON is kept in [`evals/results/before-line-numbers/`](evals/results/before-line-numbers) (second run of each model; the first run had the same totals), after-change runs in [`after-line-numbers/`](evals/results/after-line-numbers).
 
 How to read these numbers honestly:
-- **Small, synthetic suite.** 16 cases I wrote myself, each with a single, fairly obvious planted bug. Real PRs are messier, so treat these as a regression baseline, not as a claim about real-world accuracy.
-- **Two runs per model**, not a statistical sample. LLM output varies between runs.
-- Cost is US$ 0 because both ran on free tiers; the paid-tier equivalent is not estimated yet (no verified price table), so the report shows `n/a` for it.
+- **Small, synthetic suite.** 16 cases I wrote myself, each with a single, fairly obvious planted bug, and a case set I also used to tune the prompt. Real PRs are messier, so treat these as a regression baseline, not as a claim about real-world accuracy.
+- **Two runs per version**, not a statistical sample. LLM output varies between runs.
+- The paid-tier cost is not estimated yet (no verified price table), so the report shows `n/a` for it.
 
 ## Usage
 

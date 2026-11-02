@@ -30,6 +30,16 @@ class Hunk:
         body = "\n".join(f"{line.kind}{line.text}" for line in self.lines)
         return f"{self.header}\n{body}" if body else self.header
 
+    @property
+    def numbered(self) -> str:
+        """Like ``raw`` but every added/context line carries its line number in the new file,
+        so the model does not have to count from the hunk header."""
+        rows = [self.header]
+        for line in self.lines:
+            number = "" if line.new_number is None else str(line.new_number)
+            rows.append(f"{number:>5} {line.kind}{line.text}")
+        return "\n".join(rows)
+
 
 @dataclass
 class FileDiff:

@@ -1,0 +1,371 @@
+{
+  "model": "openai/gpt-oss-120b",
+  "date": "2026-11-02",
+  "metrics": {
+    "precision": 0.8666666666666667,
+    "recall": 1.0,
+    "false_positive_rate": 0.0,
+    "tp": 13,
+    "fp": 2,
+    "fn": 0,
+    "avg_cost_usd": null,
+    "avg_latency_seconds": 1.6623749999853317
+  },
+  "cases": [
+    {
+      "name": "php-clean-query-binding",
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 1.125,
+      "prompt_tokens": 1245,
+      "completion_tokens": 278,
+      "cost_usd": null,
+      "error": null,
+      "findings": []
+    },
+    {
+      "name": "php-hardcoded-secret",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 1.3909999999741558,
+      "prompt_tokens": 1240,
+      "completion_tokens": 450,
+      "cost_usd": null,
+      "error": null,
+      "findings": [
+        {
+          "file": "app/Services/PaymentGateway.php",
+          "line": 7,
+          "severity": "major",
+          "category": "security",
+          "title": "Hardcoded API token",
+          "explanation": "The code adds a private constant containing an API token directly in source. Hard‑coding credentials exposes secrets in version control and can lead to credential leakage.",
+          "suggestion": "Move the token to environment configuration (e.g., .env) and retrieve it at runtime, or inject it via a secure secrets manager.",
+          "confidence": 0.98
+        }
+      ]
+    },
+    {
+      "name": "php-inline-validation",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 2.062999999994645,
+      "prompt_tokens": 1254,
+      "completion_tokens": 753,
+      "cost_usd": null,
+      "error": null,
+      "findings": [
+        {
+          "file": "app/Http/Controllers/ProfileController.php",
+          "line": 17,
+          "severity": "minor",
+          "category": "convention",
+          "title": "Inline request validation instead of Form Request",
+          "explanation": "The method validates input directly in the controller using $request->validate, which violates the team convention that request validation should be performed via Form Request classes.",
+          "suggestion": "Create a dedicated Form Request (e.g., UpdateNameRequest) with validation rules and type‑hint it in the controller method.",
+          "confidence": 0.92
+        }
+      ]
+    },
+    {
+      "name": "php-load-whole-table",
+      "tp": 1,
+      "fp": 1,
+      "fn": 0,
+      "latency_seconds": 2.702999999979511,
+      "prompt_tokens": 1241,
+      "completion_tokens": 1088,
+      "cost_usd": null,
+      "error": null,
+      "findings": [
+        {
+          "file": "app/Http/Controllers/UserSearchController.php",
+          "line": 16,
+          "severity": "major",
+          "category": "performance",
+          "title": "Inefficient in-memory user filtering",
+          "explanation": "The method loads all User records with User::all() and then filters them in PHP. This can cause high memory usage and slow response times for large user tables.",
+          "suggestion": "Use a query builder clause, e.g., User::where('name', 'like', \"%{$term}%\")->get();",
+          "confidence": 0.95
+        },
+        {
+          "file": "app/Http/Controllers/UserSearchController.php",
+          "line": 14,
+          "severity": "minor",
+          "category": "convention",
+          "title": "Missing input validation for search term",
+          "explanation": "The $term parameter is taken directly from user input without validation. Laravel conventions recommend using Form Request classes or validating the input within the controller.",
+          "suggestion": "Create a Form Request that validates the 'term' parameter (e.g., required|string) and type‑hint it in the controller.",
+          "confidence": 0.88
+        }
+      ]
+    },
+    {
+      "name": "php-loose-comparison",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 1.4219999999913853,
+      "prompt_tokens": 1262,
+      "completion_tokens": 502,
+      "cost_usd": null,
+      "error": null,
+      "findings": [
+        {
+          "file": "app/Support/PathGuard.php",
+          "line": 14,
+          "severity": "major",
+          "category": "bug",
+          "title": "Loose comparison with strpos may misdetect admin path",
+          "explanation": "The code uses `strpos($path, '/admin') == false`, but `strpos` returns 0 when the substring is at the start of the string. The loose comparison treats 0 as false, causing the method to return false for valid admin paths like \"/admin/dashboard\".",
+          "suggestion": "Use a strict comparison: `if (strpos($path, '/admin') !== false) { ... }`",
+          "confidence": 0.97
+        }
+      ]
+    },
+    {
+      "name": "php-n-plus-one",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 1.9059999999881256,
+      "prompt_tokens": 1281,
+      "completion_tokens": 698,
+      "cost_usd": null,
+      "error": null,
+      "findings": [
+        {
+          "file": "app/Http/Controllers/OrderReportController.php",
+          "line": 18,
+          "severity": "minor",
+          "category": "performance",
+          "title": "Potential N+1 query when accessing customer relationship",
+          "explanation": "Accessing $order->customer inside the loop triggers a lazy-loaded relationship for each order, resulting in N+1 queries and degraded performance.",
+          "suggestion": "Eager load the customer relationship, e.g., Order::with('customer')->latest()->take(50)->get().",
+          "confidence": 0.96
+        }
+      ]
+    },
+    {
+      "name": "php-unescaped-blade",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 1.3599999999860302,
+      "prompt_tokens": 1244,
+      "completion_tokens": 330,
+      "cost_usd": null,
+      "error": null,
+      "findings": [
+        {
+          "file": "resources/views/comments/show.blade.php",
+          "line": 4,
+          "severity": "major",
+          "category": "security",
+          "title": "Unescaped user content with {!! !!}",
+          "explanation": "The template outputs $comment->body using Blade's raw echo syntax `{!! !!}` which does not escape HTML. Since comment bodies are user-provided, this can lead to reflected or stored XSS attacks.",
+          "suggestion": "Escape the output with `{{ $comment->body }}` or sanitize the content before rendering.",
+          "confidence": 0.97
+        }
+      ]
+    },
+    {
+      "name": "py-clean-constants",
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 0.6719999999913853,
+      "prompt_tokens": 1186,
+      "completion_tokens": 150,
+      "cost_usd": null,
+      "error": null,
+      "findings": []
+    },
+    {
+      "name": "py-clean-helper",
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 1.0469999999913853,
+      "prompt_tokens": 1291,
+      "completion_tokens": 282,
+      "cost_usd": null,
+      "error": null,
+      "findings": []
+    },
+    {
+      "name": "py-divide-by-zero",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 2.5939999999827705,
+      "prompt_tokens": 1220,
+      "completion_tokens": 722,
+      "cost_usd": null,
+      "error": null,
+      "findings": [
+        {
+          "file": "app/report.py",
+          "line": 6,
+          "severity": "major",
+          "category": "bug",
+          "title": "Potential division by zero",
+          "explanation": "The function conversion_rate divides orders by visits without checking if visits is zero, which would raise a ZeroDivisionError at runtime.",
+          "suggestion": "Add a check for visits == 0 and handle appropriately (e.g., return 0 or raise a ValueError).",
+          "confidence": 0.96
+        }
+      ]
+    },
+    {
+      "name": "py-eval-user-input",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 1.9689999999827705,
+      "prompt_tokens": 1229,
+      "completion_tokens": 719,
+      "cost_usd": null,
+      "error": null,
+      "findings": [
+        {
+          "file": "app/calc.py",
+          "line": 11,
+          "severity": "major",
+          "category": "security",
+          "title": "Unsafe use of eval on user input",
+          "explanation": "The evaluate function calls eval on a string supplied by the user, which can execute arbitrary code and lead to code injection vulnerabilities.",
+          "suggestion": "Replace eval with a safe expression parser (e.g., ast.literal_eval for literals or a dedicated math expression evaluator) and validate the input.",
+          "confidence": 0.98
+        }
+      ]
+    },
+    {
+      "name": "py-mutable-default",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 1.2659999999741558,
+      "prompt_tokens": 1225,
+      "completion_tokens": 408,
+      "cost_usd": null,
+      "error": null,
+      "findings": [
+        {
+          "file": "app/cart.py",
+          "line": 10,
+          "severity": "major",
+          "category": "bug",
+          "title": "Mutable default argument for items list",
+          "explanation": "Using a mutable default (list []) for the items parameter causes the same list to be reused across calls, leading to unexpected accumulation of items and potential bugs.",
+          "suggestion": "def add_item(item: Item, items: list[Item] | None = None) -> list[Item]:\n    if items is None:\n        items = []\n    items.append(item)\n    return items",
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "name": "py-off-by-one",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 1.4849999999860302,
+      "prompt_tokens": 1270,
+      "completion_tokens": 501,
+      "cost_usd": null,
+      "error": null,
+      "findings": [
+        {
+          "file": "app/stats.py",
+          "line": 11,
+          "severity": "major",
+          "category": "bug",
+          "title": "Off‑by‑one error in window range",
+          "explanation": "The loop uses `range(len(values) - window)`, which skips the last possible window. For a list of length N and window size W, the correct number of windows is N‑W+1. The current code will produce one fewer sum than expected, leading to incorrect results.",
+          "suggestion": "Change the range to `range(len(values) - window + 1)` and optionally guard against non‑positive window sizes.",
+          "confidence": 0.9
+        }
+      ]
+    },
+    {
+      "name": "py-query-in-loop",
+      "tp": 1,
+      "fp": 1,
+      "fn": 0,
+      "latency_seconds": 2.265999999974156,
+      "prompt_tokens": 1313,
+      "completion_tokens": 856,
+      "cost_usd": null,
+      "error": null,
+      "findings": [
+        {
+          "file": "app/exports.py",
+          "line": 12,
+          "severity": "major",
+          "category": "performance",
+          "title": "N+1 query pattern",
+          "explanation": "Inside the loop each order triggers a separate query to fetch the customer name, resulting in N+1 queries which can degrade performance for many orders.",
+          "suggestion": "Use a single join query to retrieve orders with their customers in one database call.",
+          "confidence": 0.95
+        },
+        {
+          "file": "app/exports.py",
+          "line": 14,
+          "severity": "major",
+          "category": "bug",
+          "title": "Possible None dereference",
+          "explanation": "If the customer query returns no row, `customer` will be None and accessing `customer[0]` will raise a TypeError.",
+          "suggestion": "Check that `customer` is not None before accessing its elements, or handle missing customers appropriately.",
+          "confidence": 0.85
+        }
+      ]
+    },
+    {
+      "name": "py-sql-injection",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 1.437999999994645,
+      "prompt_tokens": 1265,
+      "completion_tokens": 446,
+      "cost_usd": null,
+      "error": null,
+      "findings": [
+        {
+          "file": "app/repo/users.py",
+          "line": 10,
+          "severity": "major",
+          "category": "security",
+          "title": "Potential SQL injection via string interpolation",
+          "explanation": "The query is constructed using an f-string that directly embeds the 'name' parameter, which may come from user input. This allows SQL injection attacks. Use parameterized queries instead.",
+          "suggestion": "return conn.execute(\"SELECT id, name FROM users WHERE name = ?\", (name,)).fetchall()",
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "name": "py-swallowed-exception",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 1.8909999999741558,
+      "prompt_tokens": 1255,
+      "completion_tokens": 697,
+      "cost_usd": null,
+      "error": null,
+      "findings": [
+        {
+          "file": "app/importer.py",
+          "line": 12,
+          "severity": "minor",
+          "category": "bug",
+          "title": "Swallowing exceptions hides errors",
+          "explanation": "The function load_optional catches all exceptions with a bare except and silently discards them, returning an empty dict. This can mask configuration loading failures and make debugging difficult.",
+          "suggestion": "Catch specific exceptions (e.g., FileNotFoundError, json.JSONDecodeError) and handle them appropriately, or at least log the error before returning a fallback.",
+          "confidence": 0.96
+        }
+      ]
+    }
+  ]
+}

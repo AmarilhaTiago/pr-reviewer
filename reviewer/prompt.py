@@ -13,8 +13,9 @@ Prefer few, high-confidence findings over many speculative ones; if the change i
 no findings.
 
 Rules for the output:
-- Report each finding on a line that appears in the NEW version of the file (line numbers of the \
-added or context lines of the diff).
+- Every added ("+") and context (" ") line of the diff is prefixed with its line number in the \
+NEW file; removed ("-") lines have no number. Report each finding on one of those numbered lines, \
+using the number printed in the prefix.
 - "confidence" is your honest probability (0 to 1) that the finding is a real problem.
 - Write all text in English.
 
