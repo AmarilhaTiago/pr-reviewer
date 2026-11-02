@@ -1,0 +1,16 @@
+{
+  "id": "chatcmpl-1",
+  "object": "chat.completion",
+  "model": "test-model",
+  "choices": [
+    {
+      "index": 0,
+      "finish_reason": "stop",
+      "message": {
+        "role": "assistant",
+        "content": "{\"findings\":[{\"file\":\"a.py\",\"line\":2,\"severity\":\"major\",\"category\":\"bug\",\"title\":\"Off by one\",\"explanation\":\"x\",\"confidence\":0.9}],\"summary\":\"one issue\"}"
+      }
+    }
+  ],
+  "usage": {"prompt_tokens": 120, "completion_tokens": 40, "total_tokens": 160}
+}
