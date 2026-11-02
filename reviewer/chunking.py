@@ -32,7 +32,7 @@ def _change_size(f: FileDiff) -> int:
 
 
 def _make_chunk(path: str, hunks: list[Hunk]) -> Chunk:
-    text = f"File: {path}\n" + "\n\n".join(h.raw for h in hunks)
+    text = f"File: {path}\n" + "\n\n".join(h.numbered for h in hunks)
     added = {
         line.new_number: line.text
         for h in hunks

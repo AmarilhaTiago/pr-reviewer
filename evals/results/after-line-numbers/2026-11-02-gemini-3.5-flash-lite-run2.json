@@ -1,0 +1,318 @@
+{
+  "model": "gemini-3.5-flash-lite",
+  "date": "2026-11-02",
+  "metrics": {
+    "precision": 1.0,
+    "recall": 0.7692307692307693,
+    "false_positive_rate": 0.0,
+    "tp": 10,
+    "fp": 0,
+    "fn": 3,
+    "avg_cost_usd": null,
+    "avg_latency_seconds": 1.3154375000012806
+  },
+  "cases": [
+    {
+      "name": "php-clean-query-binding",
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 2.0,
+      "prompt_tokens": 894,
+      "completion_tokens": 39,
+      "cost_usd": null,
+      "error": null,
+      "findings": []
+    },
+    {
+      "name": "php-hardcoded-secret",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 1.1559999999881256,
+      "prompt_tokens": 885,
+      "completion_tokens": 143,
+      "cost_usd": null,
+      "error": null,
+      "findings": [
+        {
+          "file": "app/Services/PaymentGateway.php",
+          "line": 7,
+          "severity": "major",
+          "category": "security",
+          "title": "Hardcoded secret in source code",
+          "explanation": "A sensitive API token has been hardcoded directly into the source code, violating security best practices.",
+          "suggestion": "Load the API token from environment configuration using config() or env() instead.",
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "name": "php-inline-validation",
+      "tp": 0,
+      "fp": 0,
+      "fn": 1,
+      "latency_seconds": 1.0939999999827705,
+      "prompt_tokens": 909,
+      "completion_tokens": 48,
+      "cost_usd": null,
+      "error": null,
+      "findings": []
+    },
+    {
+      "name": "php-load-whole-table",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 1.437000000005355,
+      "prompt_tokens": 891,
+      "completion_tokens": 191,
+      "cost_usd": null,
+      "error": null,
+      "findings": [
+        {
+          "file": "app/Http/Controllers/UserSearchController.php",
+          "line": 16,
+          "severity": "major",
+          "category": "performance",
+          "title": "Inefficient database query and collection filtering",
+          "explanation": "Calling User::all() loads all records into memory before filtering them in PHP. This is a performance anti-pattern and can cause memory issues as the users table grows.",
+          "suggestion": "Use Eloquent query scopes or database where clauses like User::where('name', 'like', '%' . $term . '%')->get(); instead.",
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "name": "php-loose-comparison",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 1.25,
+      "prompt_tokens": 911,
+      "completion_tokens": 134,
+      "cost_usd": null,
+      "error": null,
+      "findings": [
+        {
+          "file": "app/Support/PathGuard.php",
+          "line": 14,
+          "severity": "major",
+          "category": "bug",
+          "title": "Use strict comparison for strpos",
+          "explanation": "Using loose comparison '==' with strpos can lead to bugs if '/admin' is found at index 0, since 0 evaluates to false in loose comparisons.",
+          "suggestion": "Use 'strpos($path, '/admin') !== false' instead.",
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "name": "php-n-plus-one",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 2.0309999999881256,
+      "prompt_tokens": 937,
+      "completion_tokens": 147,
+      "cost_usd": null,
+      "error": null,
+      "findings": [
+        {
+          "file": "app/Http/Controllers/OrderReportController.php",
+          "line": 17,
+          "severity": "major",
+          "category": "performance",
+          "title": "N+1 query problem inside loop",
+          "explanation": "Accessing $order->customer inside a loop results in an N+1 query problem, running a separate database query for each order.",
+          "suggestion": "Use eager loading like Order::with('customer')->latest()->take(50)->get() and pluck the customer names.",
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "name": "php-unescaped-blade",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 1.5,
+      "prompt_tokens": 874,
+      "completion_tokens": 172,
+      "cost_usd": null,
+      "error": null,
+      "findings": [
+        {
+          "file": "resources/views/comments/show.blade.php",
+          "line": 4,
+          "severity": "major",
+          "category": "security",
+          "title": "Unescaped output on user-controlled data",
+          "explanation": "Using {!! !!} in Blade renders raw HTML, which can lead to Cross-Site Scripting (XSS) vulnerabilities if the comment body contains unescaped user input.",
+          "suggestion": "Use {{ $comment->body }} instead to automatically escape output.",
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "name": "py-clean-constants",
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 0.9060000000172295,
+      "prompt_tokens": 827,
+      "completion_tokens": 17,
+      "cost_usd": null,
+      "error": null,
+      "findings": []
+    },
+    {
+      "name": "py-clean-helper",
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 1.0160000000032596,
+      "prompt_tokens": 933,
+      "completion_tokens": 48,
+      "cost_usd": null,
+      "error": null,
+      "findings": []
+    },
+    {
+      "name": "py-divide-by-zero",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 1.5160000000032596,
+      "prompt_tokens": 862,
+      "completion_tokens": 156,
+      "cost_usd": null,
+      "error": null,
+      "findings": [
+        {
+          "file": "app/report.py",
+          "line": 6,
+          "severity": "major",
+          "category": "bug",
+          "title": "Potential ZeroDivisionError",
+          "explanation": "Dividing by visits without checking if visits is zero can raise an unhandled ZeroDivisionError when visits equals 0.",
+          "suggestion": "Check if visits is zero before performing the division, or handle the exception appropriately.",
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "name": "py-eval-user-input",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 1.4690000000118744,
+      "prompt_tokens": 870,
+      "completion_tokens": 110,
+      "cost_usd": null,
+      "error": null,
+      "findings": [
+        {
+          "file": "app/calc.py",
+          "line": 11,
+          "severity": "blocker",
+          "category": "security",
+          "title": "Avoid using eval on external input",
+          "explanation": "Using eval() on user-controlled input allows arbitrary code execution and is a severe security vulnerability.",
+          "suggestion": "Replace eval() with a safe math expression parser or library.",
+          "confidence": 1.0
+        }
+      ]
+    },
+    {
+      "name": "py-mutable-default",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 1.25,
+      "prompt_tokens": 867,
+      "completion_tokens": 146,
+      "cost_usd": null,
+      "error": null,
+      "findings": [
+        {
+          "file": "app/cart.py",
+          "line": 10,
+          "severity": "major",
+          "category": "bug",
+          "title": "Mutable default argument used",
+          "explanation": "Using a mutable object like a list as a default argument in Python causes shared state across function calls.",
+          "suggestion": "Use None as the default value and instantiate a new list inside the function if the argument is None.",
+          "confidence": 1.0
+        }
+      ]
+    },
+    {
+      "name": "py-off-by-one",
+      "tp": 0,
+      "fp": 0,
+      "fn": 1,
+      "latency_seconds": 0.75,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "cost_usd": null,
+      "error": "LLM failed for: app/stats.py",
+      "findings": []
+    },
+    {
+      "name": "py-query-in-loop",
+      "tp": 0,
+      "fp": 0,
+      "fn": 1,
+      "latency_seconds": 0.7030000000086147,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "cost_usd": null,
+      "error": "LLM failed for: app/exports.py",
+      "findings": []
+    },
+    {
+      "name": "py-sql-injection",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 1.6410000000032596,
+      "prompt_tokens": 917,
+      "completion_tokens": 155,
+      "cost_usd": null,
+      "error": null,
+      "findings": [
+        {
+          "file": "app/repo/users.py",
+          "line": 10,
+          "severity": "blocker",
+          "category": "security",
+          "title": "SQL Injection vulnerability",
+          "explanation": "Building SQL queries by formatting variables directly into the query string allows SQL injection attacks.",
+          "suggestion": "Use parameterized queries like conn.execute(\"SELECT id, name FROM users WHERE name = ?\", (name,))",
+          "confidence": 1.0
+        }
+      ]
+    },
+    {
+      "name": "py-swallowed-exception",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_seconds": 1.3280000000086147,
+      "prompt_tokens": 907,
+      "completion_tokens": 131,
+      "cost_usd": null,
+      "error": null,
+      "findings": [
+        {
+          "file": "app/importer.py",
+          "line": 12,
+          "severity": "major",
+          "category": "bug",
+          "title": "Bare or empty except block swallows exceptions",
+          "explanation": "Swallowing all exceptions silently with 'pass' makes debugging difficult and hides unexpected errors like FileNotFoundError vs JSONDecodeError or permission errors.",
+          "suggestion": "Catch specific exceptions such as FileNotFoundError or log the exception before returning the default dict.",
+          "confidence": 0.95
+        }
+      ]
+    }
+  ]
+}

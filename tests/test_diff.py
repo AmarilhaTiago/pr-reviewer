@@ -107,3 +107,23 @@ def test_no_newline_marker_ignored_and_empty_input():  # AC4
     (f,) = parse_diff(diff)
     assert f.added_lines == {1: "b"}
     assert parse_diff("") == []
+
+
+def test_numbered_hunk_prefixes_new_file_line_numbers():  # AC1
+    diff = """diff --git a/a.py b/a.py
+--- a/a.py
++++ b/a.py
+@@ -8,4 +8,4 @@ def f():
+ keep
+-old
++new
+ tail
+"""
+    (hunk,) = parse_diff(diff)[0].hunks
+    assert hunk.numbered.splitlines() == [
+        "@@ -8,4 +8,4 @@ def f():",
+        "    8  keep",
+        "      -old",
+        "    9 +new",
+        "   10  tail",
+    ]
