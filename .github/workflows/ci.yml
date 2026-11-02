@@ -13,3 +13,12 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run pytest
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t pr-reviewer .
+      - name: Smoke test (no API key -> skipped, exit 0)
+        run: docker run --rm pr-reviewer "" "" "" "" minor 60000 token | grep -q skipped
+      - name: CLI available in the image
+        run: docker run --rm --entrypoint reviewer pr-reviewer --help

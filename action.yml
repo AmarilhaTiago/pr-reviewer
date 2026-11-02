@@ -1,0 +1,41 @@
+name: pr-reviewer
+description: First-pass pull request review with an LLM, posted as inline comments plus an idempotent summary.
+author: AmarilhaTiago
+branding:
+  icon: eye
+  color: blue
+
+inputs:
+  provider:
+    description: "LLM provider: gemini, groq or openai-compatible."
+    default: gemini
+  model:
+    description: Model name for the provider (see the provider docs).
+    required: true
+  api-key:
+    description: Provider API key. Store it as a repository secret.
+    required: true
+  rules-path:
+    description: Path to the team rules Markdown file (needs actions/checkout).
+    default: ""
+  min-severity:
+    description: "Lowest severity to post inline: minor, major or blocker."
+    default: minor
+  max-tokens-per-pr:
+    description: Token budget for the whole PR (estimated).
+    default: "60000"
+  github-token:
+    description: Token used to read the PR and post the review.
+    default: ${{ github.token }}
+
+runs:
+  using: docker
+  image: Dockerfile
+  args:
+    - ${{ inputs.provider }}
+    - ${{ inputs.model }}
+    - ${{ inputs.api-key }}
+    - ${{ inputs.rules-path }}
+    - ${{ inputs.min-severity }}
+    - ${{ inputs.max-tokens-per-pr }}
+    - ${{ inputs.github-token }}
