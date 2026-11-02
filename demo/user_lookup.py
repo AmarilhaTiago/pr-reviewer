@@ -13,3 +13,7 @@ def average_score(scores: list[float]) -> float:
 def add_tag(tag: str, tags: list[str] = []) -> list[str]:
     tags.append(tag)
     return tags
+
+
+def normalize(name: str) -> str:
+    return name.strip().lower()
