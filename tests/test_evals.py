@@ -159,3 +159,22 @@ def test_cli_evals_command(tmp_path, monkeypatch):  # AC6
     assert seen["model"] == "cli-model"
     assert "| cli-model |" in res.output
     assert list((tmp_path / "res").glob("*-cli-model.json"))
+
+
+class TimedProvider(FakeProvider):
+    """Reports its own HTTP time, like OpenAICompatibleProvider (clock includes throttle waits)."""
+
+    def __init__(self):
+        super().__init__()
+        self.request_seconds = 0.0
+
+    def complete_json(self, system, user, schema):
+        self.request_seconds += 1.5
+        return super().complete_json(system, user, schema)
+
+
+def test_latency_uses_provider_request_time_when_available(tmp_path):  # AC9
+    write_case(tmp_path, "good", [{"file": "a.py", "line": 2, "category": "bug"}])
+    ticks = iter([0.0, 30.0])  # wall clock says 30 s (rate-limit waits included)
+    report = run_evals(load_cases(tmp_path), TimedProvider(), "m", clock=lambda: next(ticks))
+    assert report.results[0].latency_seconds == 1.5

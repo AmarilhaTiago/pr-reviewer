@@ -35,18 +35,22 @@ flowchart LR
 
 Eval suite: 16 cases (13 with a planted bug, 3 clean), PHP/Laravel and Python, covering security, bugs, performance and team conventions. A finding counts as correct when it hits the same file, the same category and a line within ±3.
 
-Measured on 2026-11-02 with `reviewer evals` (raw output in [`evals/results/`](evals/results)), free tier, one run:
+Measured on 2026-11-02 with `reviewer evals` (raw output in [`evals/results/`](evals/results)), both models on their free tiers:
 
-| Model | Precision | Recall | False-positive rate | Avg latency/case | Billed cost |
-|---|---|---|---|---|---|
-| gemini-3.5-flash-lite | 100% (12/12) | 92% (12/13) | 0% (0/3 clean cases) | 2.3 s | US$ 0 (free tier) |
+| Model | Precision | Recall | False-positive rate (clean cases) | Avg API latency/case | Tokens (in / out, 16 cases) | Billed cost |
+|---|---|---|---|---|---|---|
+| gemini-3.5-flash-lite | 100% (12/12) | 92% (12/13) | 0% (0/3) | 1.6 s | 13.6k / 1.9k | US$ 0 |
+| openai/gpt-oss-120b (Groq) | 79% (11/14) | 85% (11/13) | 0% (0/3) | 1.8 s | 19.2k / 9.6k | US$ 0 |
 
-The one miss is `php-inline-validation`, the "use Form Requests, not inline validation" team rule.
+What the table does not show:
+- **Gemini** missed one case in both runs: `php-inline-validation`, the "use Form Requests, not inline validation" team rule.
+- **Groq** produced the same totals in two runs, but the missed cases were *different* ones each time (e.g. `php-inline-validation` and `py-swallowed-exception` in the first, `py-eval-user-input` and `py-off-by-one` in the second). In the second run both misses were **line-number errors**: it named the right problem with the right category but cited line 6 instead of 11 (the diff it receives has hunk headers but no per-line numbers, so the model has to count; I have not yet tested whether numbering the lines fixes this). The matcher allows ±3 lines, so these count as a miss plus a false positive. It also spends about 5x more output tokens (reasoning).
+- Latency is the API call time only; the waits that keep Groq under its free-tier limit (8K tokens/minute) are not counted.
 
-How to read this number honestly:
+How to read these numbers honestly:
 - **Small, synthetic suite.** 16 cases I wrote myself, each with a single, fairly obvious planted bug. Real PRs are messier, so treat these as a regression baseline, not as a claim about real-world accuracy.
-- **One run, one model.** LLM output varies between runs. The Groq comparison is not measured yet.
-- Cost is not estimated in US$ for the paid tier yet (no verified price table), so the report shows `n/a` for it.
+- **Two runs per model**, not a statistical sample. LLM output varies between runs.
+- Cost is US$ 0 because both ran on free tiers; the paid-tier equivalent is not estimated yet (no verified price table), so the report shows `n/a` for it.
 
 ## Usage
 
