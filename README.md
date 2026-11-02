@@ -2,7 +2,7 @@
 
 First-pass pull request review with an LLM: inline comments and an idempotent summary, delivered by a GitHub Action, with schema-validated output, token/cost tracking and an eval suite.
 
-> **Status:** the code, tests and CI are done. The eval results and the demo GIF are added after the first run against real models (see [Results](#results)).
+> **Status:** code, tests, CI and a first real eval run are done (see [Results](#results)). The Groq comparison and the demo GIF are still to come.
 
 <!-- DEMO: GIF of a PR with inline comments goes here -->
 
@@ -35,7 +35,18 @@ flowchart LR
 
 Eval suite: 16 cases (13 with a planted bug, 3 clean), PHP/Laravel and Python, covering security, bugs, performance and team conventions. A finding counts as correct when it hits the same file, the same category and a line within ±3.
 
-_No measured results yet._ They are produced by `reviewer evals` and will be published here as a table (precision, recall, false-positive rate on clean cases, average cost and latency) for Gemini vs Groq. Only measured numbers go in this README.
+Measured on 2026-11-02 with `reviewer evals` (raw output in [`evals/results/`](evals/results)), free tier, one run:
+
+| Model | Precision | Recall | False-positive rate | Avg latency/case | Billed cost |
+|---|---|---|---|---|---|
+| gemini-3.5-flash-lite | 100% (12/12) | 92% (12/13) | 0% (0/3 clean cases) | 2.3 s | US$ 0 (free tier) |
+
+The one miss is `php-inline-validation`, the "use Form Requests, not inline validation" team rule.
+
+How to read this number honestly:
+- **Small, synthetic suite.** 16 cases I wrote myself, each with a single, fairly obvious planted bug. Real PRs are messier, so treat these as a regression baseline, not as a claim about real-world accuracy.
+- **One run, one model.** LLM output varies between runs. The Groq comparison is not measured yet.
+- Cost is not estimated in US$ for the paid tier yet (no verified price table), so the report shows `n/a` for it.
 
 ## Usage
 
