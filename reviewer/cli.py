@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import os
 import subprocess
 from dataclasses import replace
 from enum import StrEnum
@@ -14,9 +16,11 @@ from reviewer.config import Settings, load_dotenv
 from reviewer.cost import estimate_cost
 from reviewer.evals.report import render_table, write_results
 from reviewer.evals.runner import load_cases, run_evals
+from reviewer.github import GitHubClient, GitHubError, publish
 from reviewer.llm import LLMProvider, make_provider
 from reviewer.pipeline import review_diff
 from reviewer.render import render_json, render_markdown
+from reviewer.summary import render_summary
 
 app = typer.Typer(help="LLM-powered pull request reviewer.", no_args_is_help=True)
 
@@ -133,6 +137,69 @@ def review(
     cost = estimate_cost(cfg.model, result.usage)
     render = render_json if format is Format.json else render_markdown
     typer.echo(render(result, cfg.model, cost))
+
+
+class MinSeverity(StrEnum):
+    minor = "minor"
+    major = "major"
+    blocker = "blocker"
+
+
+def pr_number_from_event() -> int | None:
+    path = os.environ.get("GITHUB_EVENT_PATH")
+    if not path or not Path(path).is_file():
+        return None
+    event = json.loads(Path(path).read_text(encoding="utf-8"))
+    number = (event.get("pull_request") or {}).get("number") or event.get("number")
+    return int(number) if number else None
+
+
+@app.command()
+def pr(
+    number: Annotated[int | None, typer.Option("--number", help="PR number.")] = None,
+    repo: Annotated[str | None, typer.Option("--repo", help="owner/name.")] = None,
+    rules: Annotated[Path | None, typer.Option("--rules", help="Team rules.")] = None,
+    min_severity: Annotated[
+        MinSeverity, typer.Option("--min-severity", help="Lowest severity to post.")
+    ] = MinSeverity.minor,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Print, do not post.")] = False,
+) -> None:
+    """Review a GitHub pull request and post inline comments plus a summary."""
+    load_dotenv()
+    token = os.environ.get("GITHUB_TOKEN", "")
+    repo = repo or os.environ.get("GITHUB_REPOSITORY", "")
+    number = number or pr_number_from_event()
+    if not token or not repo or not number:
+        fail("need GITHUB_TOKEN, a repository (--repo / GITHUB_REPOSITORY) and a PR number")
+    rules_text = ""
+    if rules is not None:
+        if not rules.is_file():
+            fail(f"rules file not found: {rules}")
+        rules_text = rules.read_text(encoding="utf-8")
+    cfg, provider = setup_provider(None)
+    gh = GitHubClient(token, repo)
+    try:
+        diff_text = gh.get_diff(number)
+        result = review_diff(
+            diff_text,
+            provider,
+            rules=rules_text,
+            ignore_patterns=list(cfg.ignore_globs),
+            max_tokens_per_chunk=cfg.max_tokens_per_chunk,
+            max_tokens_per_pr=cfg.max_tokens_per_pr,
+            min_confidence=cfg.min_confidence,
+        )
+        cost = estimate_cost(cfg.model, result.usage)
+        if dry_run:
+            typer.echo(render_summary(result, cfg.model, cost))
+            return
+        outcome = publish(gh, number, result, cfg.model, cost, min_severity.value)
+    except GitHubError as exc:
+        fail(str(exc))
+    typer.echo(
+        f"posted {outcome.posted} inline comment(s), {outcome.already_posted} already present, "
+        f"summary {outcome.summary}"
+    )
 
 
 if __name__ == "__main__":
