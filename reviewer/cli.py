@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
 from dataclasses import replace
 from enum import StrEnum
 from pathlib import Path
@@ -72,9 +73,17 @@ def setup_provider(model: str | None) -> tuple[Settings, LLMProvider]:
     return cfg, provider
 
 
+def _force_utf8_output() -> None:
+    """Windows consoles default to cp1252, which cannot print the emoji in our reports."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8", errors="replace")
+
+
 @app.callback()
 def main() -> None:
-    pass
+    _force_utf8_output()
 
 
 @app.command()
