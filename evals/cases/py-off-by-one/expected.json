@@ -1,0 +1,9 @@
+{
+  "expected": [
+    {
+      "file": "app/stats.py",
+      "line": 11,
+      "category": "bug"
+    }
+  ]
+}

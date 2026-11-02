@@ -1,0 +1,9 @@
+{
+  "expected": [
+    {
+      "file": "app/Support/PathGuard.php",
+      "line": 14,
+      "category": "bug"
+    }
+  ]
+}

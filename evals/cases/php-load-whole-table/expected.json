@@ -1,0 +1,9 @@
+{
+  "expected": [
+    {
+      "file": "app/Http/Controllers/UserSearchController.php",
+      "line": 16,
+      "category": "performance"
+    }
+  ]
+}

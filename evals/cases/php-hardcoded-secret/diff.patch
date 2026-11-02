@@ -1,0 +1,12 @@
+diff --git a/app/Services/PaymentGateway.php b/app/Services/PaymentGateway.php
+--- a/app/Services/PaymentGateway.php
++++ b/app/Services/PaymentGateway.php
+@@ -4,6 +4,8 @@
+ 
+ class PaymentGateway
+ {
++    private const API_TOKEN = 'a1b2c3d4e5f60718293a4b5c6d7e8f90';
++
+     public function __construct(private string $apiKey)
+     {
+     }

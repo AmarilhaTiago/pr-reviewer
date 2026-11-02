@@ -1,0 +1,13 @@
+diff --git a/app/Http/Controllers/UserSearchController.php b/app/Http/Controllers/UserSearchController.php
+--- a/app/Http/Controllers/UserSearchController.php
++++ b/app/Http/Controllers/UserSearchController.php
+@@ -10,4 +10,9 @@
+     {
+         return User::findOrFail($id);
+     }
++
++    public function search(string $term)
++    {
++        return User::all()->filter(fn ($user) => str_contains($user->name, $term));
++    }
+ }

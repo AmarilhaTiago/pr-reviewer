@@ -1,0 +1,12 @@
+diff --git a/app/calc.py b/app/calc.py
+--- a/app/calc.py
++++ b/app/calc.py
+@@ -4,3 +4,8 @@
+ 
+ def multiply(a: float, b: float) -> float:
+     return a * b
++
++
++def evaluate(expression: str) -> float:
++    """Evaluate a math expression typed by the user."""
++    return eval(expression)

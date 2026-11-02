@@ -1,0 +1,14 @@
+diff --git a/app/Http/Controllers/ProfileController.php b/app/Http/Controllers/ProfileController.php
+--- a/app/Http/Controllers/ProfileController.php
++++ b/app/Http/Controllers/ProfileController.php
+@@ -11,4 +11,10 @@
+     {
+         $request->user()->update($request->validated());
+     }
++
++    public function updateName(Request $request)
++    {
++        $data = $request->validate(['name' => 'required|string|max:80']);
++        $request->user()->update($data);
++    }
+ }

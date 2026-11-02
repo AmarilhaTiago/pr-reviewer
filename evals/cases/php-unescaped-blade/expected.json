@@ -1,0 +1,9 @@
+{
+  "expected": [
+    {
+      "file": "resources/views/comments/show.blade.php",
+      "line": 4,
+      "category": "security"
+    }
+  ]
+}

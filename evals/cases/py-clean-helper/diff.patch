@@ -1,0 +1,15 @@
+diff --git a/app/text.py b/app/text.py
+--- a/app/text.py
++++ b/app/text.py
+@@ -1,2 +1,11 @@
+ def slugify(title: str) -> str:
+     return "-".join(title.lower().split())
++
++
++def truncate(text: str, limit: int) -> str:
++    """Shorten ``text`` to at most ``limit`` characters, adding an ellipsis."""
++    if limit < 1:
++        raise ValueError("limit must be positive")
++    if len(text) <= limit:
++        return text
++    return text[: limit - 1] + "…"

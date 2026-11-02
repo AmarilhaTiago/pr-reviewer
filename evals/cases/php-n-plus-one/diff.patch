@@ -1,0 +1,18 @@
+diff --git a/app/Http/Controllers/OrderReportController.php b/app/Http/Controllers/OrderReportController.php
+--- a/app/Http/Controllers/OrderReportController.php
++++ b/app/Http/Controllers/OrderReportController.php
+@@ -10,4 +10,14 @@
+     {
+         return Order::latest()->take(50)->get();
+     }
++
++    public function customers()
++    {
++        $names = [];
++        foreach (Order::latest()->take(50)->get() as $order) {
++            $names[] = $order->customer->name;
++        }
++
++        return $names;
++    }
+ }

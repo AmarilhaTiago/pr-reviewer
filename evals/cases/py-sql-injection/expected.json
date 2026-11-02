@@ -1,0 +1,9 @@
+{
+  "expected": [
+    {
+      "file": "app/repo/users.py",
+      "line": 10,
+      "category": "security"
+    }
+  ]
+}

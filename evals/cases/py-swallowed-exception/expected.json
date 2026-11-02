@@ -1,0 +1,9 @@
+{
+  "expected": [
+    {
+      "file": "app/importer.py",
+      "line": 12,
+      "category": "bug"
+    }
+  ]
+}

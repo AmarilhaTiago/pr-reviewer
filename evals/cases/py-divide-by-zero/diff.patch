@@ -1,0 +1,10 @@
+diff --git a/app/report.py b/app/report.py
+--- a/app/report.py
++++ b/app/report.py
+@@ -1,2 +1,6 @@
+ def format_percent(value: float) -> str:
+     return f"{value:.1f}%"
++
++
++def conversion_rate(orders: int, visits: int) -> float:
++    return orders / visits * 100

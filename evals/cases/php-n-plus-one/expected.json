@@ -1,0 +1,9 @@
+{
+  "expected": [
+    {
+      "file": "app/Http/Controllers/OrderReportController.php",
+      "line": 18,
+      "category": "performance"
+    }
+  ]
+}
