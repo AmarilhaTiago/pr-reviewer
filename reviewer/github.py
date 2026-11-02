@@ -8,13 +8,28 @@ import httpx
 
 from reviewer.pipeline import ReviewResult
 from reviewer.schema import Finding
-from reviewer.summary import MARKER, extract_fingerprints, fingerprint, inline_body, render_summary
+from reviewer.summary import MARKER, extract_category, inline_body, render_summary
 
 SEVERITY_ORDER = {"minor": 0, "major": 1, "blocker": 2}
 
 
 class GitHubError(Exception):
     pass
+
+
+@dataclass(frozen=True)
+class ExistingComment:
+    path: str
+    line: int
+    category: str
+
+    def covers(self, f: Finding, tolerance: int = 2) -> bool:
+        """Same issue as `f`: same file and category, line within the dedupe tolerance."""
+        return (
+            self.path == f.file
+            and self.category == f.category
+            and abs(self.line - f.line) <= tolerance
+        )
 
 
 class GitHubClient:
@@ -72,10 +87,15 @@ class GitHubClient:
         )
         return resp.text
 
-    def existing_fingerprints(self, pr: int) -> set[str]:
-        found: set[str] = set()
+    def existing_comments(self, pr: int) -> list[ExistingComment]:
+        """Inline comments this tool already posted on the PR (identified by the hidden marker)."""
+        found: list[ExistingComment] = []
         for comment in self._paged(f"/repos/{self.repo}/pulls/{pr}/comments"):
-            found |= extract_fingerprints(comment.get("body") or "")
+            category = extract_category(comment.get("body") or "")
+            # GitHub nulls `line` when the diff has moved; `original_line` is then the anchor.
+            line = comment.get("line") or comment.get("original_line")
+            if category and line and comment.get("path"):
+                found.append(ExistingComment(comment["path"], int(line), category))
         return found
 
     def post_review(self, pr: int, comments: list[dict]) -> bool:
@@ -132,8 +152,8 @@ def publish(
     eligible = [f for f in result.inline if SEVERITY_ORDER[f.severity] >= threshold]
     outcome.hidden = len(result.inline) - len(eligible)
 
-    known = gh.existing_fingerprints(pr)
-    fresh = [f for f in eligible if fingerprint(f) not in known]
+    known = gh.existing_comments(pr)
+    fresh = [f for f in eligible if not any(c.covers(f) for c in known)]
     outcome.already_posted = len(eligible) - len(fresh)
 
     if fresh:

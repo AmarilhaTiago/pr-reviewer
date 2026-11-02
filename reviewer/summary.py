@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import hashlib
+import re
 from collections.abc import Sequence
 
 from reviewer.pipeline import ReviewResult
@@ -10,31 +10,21 @@ from reviewer.render import ICONS, SEVERITIES, format_cost
 from reviewer.schema import Finding
 
 MARKER = "<!-- pr-reviewer -->"
-_FP_PREFIX = "<!-- pr-reviewer:"
-
-
-def fingerprint(f: Finding) -> str:
-    raw = f"{f.file}:{f.line}:{f.category}:{f.title}"
-    return hashlib.sha1(raw.encode()).hexdigest()[:12]
+_CATEGORY_MARKER = re.compile(r"<!-- pr-reviewer:category=([a-z]+) -->")
 
 
 def inline_body(f: Finding) -> str:
+    """Comment text. The hidden marker lets later runs recognise it by category + location,
+    never by title: the LLM rewords titles between runs."""
     text = f"**{ICONS[f.severity]} {f.severity} · {f.category}** — {f.title}\n\n{f.explanation}"
     if f.suggestion:
         text += f"\n\n**Suggestion:** {f.suggestion}"
-    return f"{text}\n\n{_FP_PREFIX}{fingerprint(f)} -->"
+    return f"{text}\n\n<!-- pr-reviewer:category={f.category} -->"
 
 
-def extract_fingerprints(body: str) -> set[str]:
-    found = set()
-    start = 0
-    while (i := body.find(_FP_PREFIX, start)) != -1:
-        j = body.find(" -->", i)
-        if j == -1:
-            break
-        found.add(body[i + len(_FP_PREFIX) : j])
-        start = j
-    return found
+def extract_category(body: str) -> str | None:
+    match = _CATEGORY_MARKER.search(body)
+    return match.group(1) if match else None
 
 
 def verdict(findings: Sequence[Finding]) -> str:

@@ -7,7 +7,7 @@ from reviewer.github import GitHubClient, GitHubError, publish
 from reviewer.llm import Usage
 from reviewer.pipeline import ReviewResult
 from reviewer.schema import Finding
-from reviewer.summary import MARKER, fingerprint, inline_body, render_summary, verdict
+from reviewer.summary import MARKER, inline_body, render_summary, verdict
 
 
 def finding(line=2, sev="major", file="a.py", title="Bad thing", conf=0.9) -> Finding:
@@ -125,14 +125,42 @@ def test_summary_is_created_then_updated_never_duplicated():  # AC3
     assert [p for m, p, _ in fake.requests if m == "PATCH"] == ["/repos/o/r/issues/comments/99"]
 
 
+def posted(f: Finding) -> dict:
+    """A review comment as the GitHub API returns it."""
+    return {"path": f.file, "line": f.line, "original_line": f.line, "body": inline_body(f)}
+
+
 def test_already_posted_findings_are_not_reposted():  # AC4
-    f_old, f_new = finding(2), finding(8, title="Another")
-    fake = FakeGitHub(review_comments=[{"body": inline_body(f_old)}, {"body": "human comment"}])
+    f_old, f_new = finding(2), finding(8, title="Another", sev="minor")
+    fake = FakeGitHub(review_comments=[posted(f_old), {"path": "a.py", "line": 3, "body": "human"}])
     out = publish(client(fake), 7, result(f_old, f_new), "m", None)
     (review,) = fake.calls("POST", "/pulls/7/reviews")
     assert [c["line"] for c in review["comments"]] == [8]
     assert (out.posted, out.already_posted) == (1, 1)
-    assert fingerprint(f_old) != fingerprint(f_new)
+
+
+def test_same_issue_with_reworded_title_or_shifted_line_is_not_reposted():  # AC4
+    """Regression: the LLM rewords titles between runs and lines shift by a few lines."""
+    before = finding(5, title="SQL Injection vulnerability")
+    after = finding(7, title="SQL Injection vulnerability via string formatting")
+    fake = FakeGitHub(review_comments=[posted(before)])
+    out = publish(client(fake), 7, result(after), "m", None)
+    assert fake.calls("POST", "/pulls/7/reviews") == [] and out.already_posted == 1
+
+
+def test_other_category_or_distant_line_is_a_new_comment():  # AC4
+    before = finding(5)
+    fake = FakeGitHub(review_comments=[posted(before)])
+    other_cat = Finding(**{**finding(5).model_dump(), "category": "security"})
+    out = publish(client(fake), 7, result(other_cat, finding(9)), "m", None)
+    assert out.posted == 2 and out.already_posted == 0
+
+
+def test_comment_whose_line_moved_uses_original_line():  # AC4
+    outdated = {**posted(finding(5)), "line": None}  # GitHub nulls `line` when the diff moved
+    fake = FakeGitHub(review_comments=[outdated])
+    out = publish(client(fake), 7, result(finding(6)), "m", None)
+    assert out.already_posted == 1
 
 
 def test_rejected_review_moves_findings_to_summary():  # AC5
@@ -163,7 +191,7 @@ def test_get_diff_uses_diff_media_type_and_errors_are_clear():  # AC6
 
 
 def test_pagination_collects_all_pages():  # AC6
-    comments = [{"body": inline_body(finding(i + 1, title=f"t{i}"))} for i in range(150)]
+    comments = [posted(finding(i + 1)) for i in range(150)]
     fake = FakeGitHub(review_comments=comments)
-    assert len(client(fake).existing_fingerprints(7)) == 150
+    assert len(client(fake).existing_comments(7)) == 150
     assert len(fake.calls("GET", "/pulls/7/comments")) == 2
