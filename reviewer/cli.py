@@ -51,11 +51,21 @@ def read_diff(diff: Path | None, base: str | None) -> str:
     return proc.stdout
 
 
-def setup_provider(model: str | None) -> tuple[Settings, LLMProvider]:
+def setup_provider(
+    model: str | None, provider_name: str | None = None
+) -> tuple[Settings, LLMProvider]:
     try:
         cfg = Settings.from_env()
     except ValueError as exc:
         fail(f"invalid configuration: {exc}")
+    if provider_name and provider_name != cfg.provider:
+        # A different provider than LLM_PROVIDER: it needs its own model and <PROVIDER>_API_KEY.
+        key_var = f"{provider_name.upper().replace('-', '_')}_API_KEY"
+        if not model:
+            fail("--provider needs an explicit --model")
+        if not os.environ.get(key_var):
+            fail(f"{key_var} is not set")
+        cfg = replace(cfg, provider=provider_name, api_key=os.environ[key_var], base_url=None)
     if model:
         cfg = replace(cfg, model=model)
     if not cfg.model:
@@ -89,6 +99,9 @@ def main() -> None:
 @app.command()
 def evals(
     model: Annotated[str | None, typer.Option("--model", help="Override LLM_MODEL.")] = None,
+    provider: Annotated[
+        str | None, typer.Option("--provider", help="Provider other than LLM_PROVIDER.")
+    ] = None,
     cases: Annotated[Path, typer.Option("--cases", help="Eval cases directory.")] = Path(
         "evals/cases"
     ),
@@ -102,10 +115,10 @@ def evals(
     if not cases.is_dir():
         fail(f"cases directory not found: {cases}")
     rules_text = rules.read_text(encoding="utf-8") if rules and rules.is_file() else ""
-    cfg, provider = setup_provider(model)
+    cfg, llm = setup_provider(model, provider)
     report = run_evals(
         load_cases(cases),
-        provider,
+        llm,
         cfg.model,
         rules=rules_text,
         ignore_patterns=list(cfg.ignore_globs),
@@ -113,6 +126,9 @@ def evals(
         max_tokens_per_pr=cfg.max_tokens_per_pr,
         min_confidence=cfg.min_confidence,
     )
+    if report.results and all(r.error for r in report.results):
+        first = report.results[0].error
+        fail(f"every case failed, nothing was measured (first error: {first})")
     path = write_results(report, out)
     typer.echo(render_table(report))
     typer.echo(f"\nResults written to {path}")
