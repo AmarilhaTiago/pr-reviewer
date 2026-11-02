@@ -4,7 +4,7 @@ First-pass pull request review with an LLM: inline comments and an idempotent su
 
 > **Status:** code, tests, CI and a first real eval run are done (see [Results](#results)). The Groq comparison and the demo GIF are still to come.
 
-<!-- DEMO: GIF of a PR with inline comments goes here -->
+**Live demo:** [PR #41](https://github.com/AmarilhaTiago/pr-reviewer/pull/41) is a real pull request with deliberately planted bugs, reviewed by this action: inline comments on the SQL injection and the mutable default argument, plus the summary comment that is updated (not duplicated) on every push. Its red `test` check is intentional: the repo's own linter also flags the planted bug, and the PR is never merged.
 
 ## Why it exists
 
