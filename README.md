@@ -2,8 +2,6 @@
 
 First-pass pull request review with an LLM: inline comments and an idempotent summary, delivered by a GitHub Action, with schema-validated output, token/cost tracking and an eval suite.
 
-> **Status:** code, tests, CI and a first real eval run are done (see [Results](#results)). The Groq comparison and the demo GIF are still to come.
-
 **Live demo:** [PR #41](https://github.com/AmarilhaTiago/pr-reviewer/pull/41) is a real pull request with deliberately planted bugs, reviewed by this action: inline comments on the SQL injection and the mutable default argument, plus the summary comment that is updated (not duplicated) on every push. Its red `test` check is intentional: the repo's own linter also flags the planted bug, and the PR is never merged.
 
 ![Inline review comments on the planted SQL injection and mutable default](docs/img/demo-inline-comments.png)
@@ -114,13 +112,14 @@ Limitation: pull requests from **forks** do not receive repository secrets, so t
 
 ## Next steps
 
+- More eval runs per model: Gemini's recall swung between 77% and 100% across two runs, so two runs cannot separate the prompt change from noise.
+- More and messier eval cases (several bugs per diff, larger diffs, more languages).
+- Publish the token price table once verified against official pricing pages (cost shows `n/a` for the paid tier until then).
 - Anthropic provider (paid, optional).
-- Publish the token price table once verified against official pricing pages (cost shows `n/a` until then).
-- More eval cases and languages.
 
 ## 🇧🇷 Resumo em português
 
-Revisor de PR com LLM que roda como GitHub Action: comenta linhas específicas do PR e mantém um comentário-resumo que é atualizado a cada push, sem duplicar. A saída do modelo é validada por schema (com uma nova tentativa em caso de erro), o diff é tratado como dado não confiável, e tokens e custo aparecem no resumo. Há uma suíte de evals (16 casos em PHP e Python) que mede precisão, recall e falsos positivos em modelos gratuitos (Gemini e Groq). Os números só entram aqui depois de medidos de verdade. Não substitui a revisão humana: ele pega o óbvio para a pessoa focar no que importa. PRs vindos de forks não têm acesso aos secrets, então a action apenas avisa e pula.
+Revisor de PR com LLM que roda como GitHub Action: comenta linhas específicas do PR e mantém um comentário-resumo que é atualizado a cada push, sem duplicar. A saída do modelo é validada por schema (com uma nova tentativa em caso de erro), o diff é tratado como dado não confiável, e tokens e custo aparecem no resumo. Há uma suíte de evals (16 casos em PHP e Python) que mede precisão, recall e falsos positivos em dois modelos gratuitos (Gemini e Groq), com custo de US$ 0. Numerar as linhas do diff no prompt melhorou o Groq nas duas rodadas (recall de 85% para 100% e 92%, precisão de 79% para 87% e 86%); no Gemini o resultado foi inconclusivo (recall entre 77% e 100% entre rodadas). Os casos são sintéticos e só há duas rodadas por versão, então os números são uma linha de base, não uma promessa de acerto em PRs reais. Não substitui a revisão humana: ele pega o óbvio para a pessoa focar no que importa. PRs vindos de forks não têm acesso aos secrets, então a action apenas avisa e pula.
 
 ## License
 
