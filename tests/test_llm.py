@@ -156,3 +156,15 @@ def test_estimate_cost():  # AC7
     prices = {"m": {"input": 2.0, "output": 4.0}}
     assert estimate_cost("m", usage, prices) == pytest.approx(4.0)
     assert estimate_cost("other", usage, prices) is None
+
+
+def test_request_seconds_counts_only_http_time_not_throttle_waits():  # AC8
+    ticks = iter(range(0, 1000))  # every clock() read advances by 1 s
+    waits: list[float] = []
+    provider = make(
+        Server(FIXTURE, FIXTURE), min_interval=100.0, sleep=waits.append, clock=lambda: next(ticks)
+    )
+    provider.complete_json("s", "u", Review)
+    provider.complete_json("s", "u", Review)
+    assert waits  # the second call was throttled...
+    assert provider.request_seconds == pytest.approx(2.0)  # ...but only 1 s per HTTP call counts

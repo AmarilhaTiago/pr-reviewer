@@ -9,7 +9,7 @@
     "fp": 0,
     "fn": 1,
     "avg_cost_usd": null,
-    "avg_latency_seconds": 2.2801875000004657
+    "avg_latency_seconds": 1.6279999999969732
   },
   "cases": [
     {
@@ -17,9 +17,9 @@
       "tp": 0,
       "fp": 0,
       "fn": 0,
-      "latency_seconds": 1.1089999999967404,
+      "latency_seconds": 1.2030000000086147,
       "prompt_tokens": 844,
-      "completion_tokens": 17,
+      "completion_tokens": 34,
       "cost_usd": null,
       "error": null,
       "findings": []
@@ -29,9 +29,9 @@
       "tp": 1,
       "fp": 0,
       "fn": 0,
-      "latency_seconds": 2.25,
+      "latency_seconds": 1.2660000000032596,
       "prompt_tokens": 843,
-      "completion_tokens": 109,
+      "completion_tokens": 127,
       "cost_usd": null,
       "error": null,
       "findings": [
@@ -40,9 +40,9 @@
           "line": 6,
           "severity": "major",
           "category": "security",
-          "title": "Hardcoded Secret",
-          "explanation": "A potential API token is hardcoded directly into the source code.",
-          "suggestion": "Move the API token to an environment variable and access it via config() or env().",
+          "title": "Hardcoded API token",
+          "explanation": "Hardcoding secrets like API tokens directly in the source code is a security risk. They should be loaded from environment configuration.",
+          "suggestion": "Use config('services.payment.token') or env('PAYMENT_API_TOKEN') instead of hardcoding the secret.",
           "confidence": 0.95
         }
       ]
@@ -52,9 +52,9 @@
       "tp": 0,
       "fp": 0,
       "fn": 1,
-      "latency_seconds": 1.6559999999881256,
+      "latency_seconds": 1.0,
       "prompt_tokens": 856,
-      "completion_tokens": 45,
+      "completion_tokens": 31,
       "cost_usd": null,
       "error": null,
       "findings": []
@@ -64,21 +64,21 @@
       "tp": 1,
       "fp": 0,
       "fn": 0,
-      "latency_seconds": 2.437000000005355,
+      "latency_seconds": 1.2030000000086147,
       "prompt_tokens": 841,
-      "completion_tokens": 190,
+      "completion_tokens": 192,
       "cost_usd": null,
       "error": null,
       "findings": [
         {
           "file": "app/Http/Controllers/UserSearchController.php",
-          "line": 15,
+          "line": 14,
           "severity": "major",
           "category": "performance",
-          "title": "Inefficient collection filtering instead of database query",
-          "explanation": "Fetching all users with User::all() and filtering them in memory loads the entire user table into application memory and performs a linear scan, which will degrade performance significantly as the user base grows.",
-          "suggestion": "Use a database query with a where clause, such as User::where('name', 'like', \"%{$term}%\")->get();",
-          "confidence": 0.95
+          "title": "Inefficient user search loading all records into memory",
+          "explanation": "Using User::all()->filter() loads every user from the database into memory and filters them in application space. This does not scale and causes severe performance issues as the user table grows.",
+          "suggestion": "Use database-level filtering instead, such as User::where('name', 'like', \"%{$term}%\")->get();",
+          "confidence": 0.99
         }
       ]
     },
@@ -87,9 +87,9 @@
       "tp": 1,
       "fp": 0,
       "fn": 0,
-      "latency_seconds": 1.9530000000086147,
+      "latency_seconds": 1.125,
       "prompt_tokens": 851,
-      "completion_tokens": 198,
+      "completion_tokens": 124,
       "cost_usd": null,
       "error": null,
       "findings": [
@@ -99,9 +99,9 @@
           "severity": "major",
           "category": "bug",
           "title": "Loose comparison with strpos",
-          "explanation": "Using `== false` with `strpos` can lead to bugs because `strpos` returns 0 when the string is found at the beginning, which evaluates to loose false. Additionally, team conventions require strict comparison (`===` / `!==`).",
-          "suggestion": "Use strict comparison: strpos($path, '/admin') === false",
-          "confidence": 0.99
+          "explanation": "Using '==' with strpos can lead to bugs because if '/admin' is found at index 0, 0 == false evaluates to true in PHP.",
+          "suggestion": "Use '===' instead of '==' to strictly check for false.",
+          "confidence": 1.0
         }
       ]
     },
@@ -110,9 +110,9 @@
       "tp": 1,
       "fp": 0,
       "fn": 0,
-      "latency_seconds": 1.7820000000065193,
+      "latency_seconds": 2.437000000005355,
       "prompt_tokens": 872,
-      "completion_tokens": 132,
+      "completion_tokens": 124,
       "cost_usd": null,
       "error": null,
       "findings": [
@@ -122,8 +122,8 @@
           "severity": "major",
           "category": "performance",
           "title": "N+1 query problem in loop",
-          "explanation": "Accessing the customer relation inside a loop over orders will execute a separate query for each order, resulting in an N+1 performance issue.",
-          "suggestion": "Eager load the customer relation using Order::with('customer')->... before looping.",
+          "explanation": "Accessing the customer relation inside a loop over orders causes N+1 database queries.",
+          "suggestion": "Use eager loading: Order::with('customer')->latest()->take(50)->get()",
           "confidence": 0.99
         }
       ]
@@ -133,9 +133,9 @@
       "tp": 1,
       "fp": 0,
       "fn": 0,
-      "latency_seconds": 2.0929999999934807,
+      "latency_seconds": 3.7030000000086147,
       "prompt_tokens": 837,
-      "completion_tokens": 180,
+      "completion_tokens": 181,
       "cost_usd": null,
       "error": null,
       "findings": [
@@ -144,9 +144,9 @@
           "line": 4,
           "severity": "major",
           "category": "security",
-          "title": "Unescaped output on user-controlled data",
-          "explanation": "Using {!! !!} on $comment->body evaluates raw HTML and can introduce Cross-Site Scripting (XSS) vulnerabilities if the comment body is user-supplied.",
-          "suggestion": "Use standard escaped output like {{ $comment->body }} unless raw HTML rendering is explicitly required and the content is safely sanitized.",
+          "title": "Unescaped output of user-controlled data",
+          "explanation": "Using {!! !!} on $comment->body outputs raw HTML without escaping, which can lead to Cross-Site Scripting (XSS) if the comment body contains malicious user input.",
+          "suggestion": "Use standard escaped output {{ $comment->body }} instead of {!! $comment->body !!}.",
           "confidence": 0.95
         }
       ]
@@ -156,9 +156,9 @@
       "tp": 0,
       "fp": 0,
       "fn": 0,
-      "latency_seconds": 1.8439999999827705,
+      "latency_seconds": 0.9689999999827705,
       "prompt_tokens": 798,
-      "completion_tokens": 23,
+      "completion_tokens": 39,
       "cost_usd": null,
       "error": null,
       "findings": []
@@ -168,9 +168,9 @@
       "tp": 0,
       "fp": 0,
       "fn": 0,
-      "latency_seconds": 1.8590000000258442,
+      "latency_seconds": 0.9219999999913853,
       "prompt_tokens": 886,
-      "completion_tokens": 30,
+      "completion_tokens": 42,
       "cost_usd": null,
       "error": null,
       "findings": []
@@ -180,9 +180,9 @@
       "tp": 1,
       "fp": 0,
       "fn": 0,
-      "latency_seconds": 2.390999999974156,
+      "latency_seconds": 1.2969999999913853,
       "prompt_tokens": 827,
-      "completion_tokens": 178,
+      "completion_tokens": 176,
       "cost_usd": null,
       "error": null,
       "findings": [
@@ -192,8 +192,8 @@
           "severity": "major",
           "category": "bug",
           "title": "Potential ZeroDivisionError in conversion_rate",
-          "explanation": "The conversion_rate function divides by visits without checking if visits is zero, which will raise a ZeroDivisionError if there are zero visits.",
-          "suggestion": "Add a check for zero visits, e.g., 'return (orders / visits * 100) if visits > 0 else 0.0'.",
+          "explanation": "The function divides by 'visits' without checking if it is zero, which will raise a ZeroDivisionError if visits is 0.",
+          "suggestion": "Add a check for zero visits, e.g., return (orders / visits * 100) if visits > 0 else 0.0",
           "confidence": 0.95
         }
       ]
@@ -203,9 +203,9 @@
       "tp": 1,
       "fp": 0,
       "fn": 0,
-      "latency_seconds": 1.7190000000118744,
+      "latency_seconds": 2.640999999974156,
       "prompt_tokens": 829,
-      "completion_tokens": 109,
+      "completion_tokens": 111,
       "cost_usd": null,
       "error": null,
       "findings": [
@@ -215,7 +215,7 @@
           "severity": "blocker",
           "category": "security",
           "title": "Use of eval on external input",
-          "explanation": "Using eval() on user-controlled input allows arbitrary code execution, presenting a critical security vulnerability.",
+          "explanation": "Using eval() on user-controlled input allows arbitrary code execution, which is a critical security vulnerability.",
           "suggestion": "Replace eval() with a safe math expression parser or library.",
           "confidence": 1.0
         }
@@ -226,9 +226,9 @@
       "tp": 1,
       "fp": 0,
       "fn": 0,
-      "latency_seconds": 2.25,
+      "latency_seconds": 2.0310000000172295,
       "prompt_tokens": 825,
-      "completion_tokens": 158,
+      "completion_tokens": 149,
       "cost_usd": null,
       "error": null,
       "findings": [
@@ -237,9 +237,9 @@
           "line": 9,
           "severity": "major",
           "category": "bug",
-          "title": "Mutable default argument used for items",
-          "explanation": "Using a mutable list as a default argument in Python causes the same list instance to be shared across multiple function calls, leading to unexpected state retention between calls.",
-          "suggestion": "Use None as the default value and instantiate a new list inside the function body if the argument is None.",
+          "title": "Mutable default argument used",
+          "explanation": "Using a mutable default argument like a list in Python retains state across function calls, which can cause unexpected side effects and bugs.",
+          "suggestion": "Use None as the default value and initialize the list inside the function body.",
           "confidence": 1.0
         }
       ]
@@ -249,9 +249,9 @@
       "tp": 1,
       "fp": 0,
       "fn": 0,
-      "latency_seconds": 1.9679999999934807,
+      "latency_seconds": 1.2969999999913853,
       "prompt_tokens": 870,
-      "completion_tokens": 193,
+      "completion_tokens": 200,
       "cost_usd": null,
       "error": null,
       "findings": [
@@ -260,9 +260,9 @@
           "line": 10,
           "severity": "major",
           "category": "bug",
-          "title": "Incorrect loop range for moving sums window",
-          "explanation": "The loop range uses `len(values) - window`, which stops short and fails to include the final window of consecutive items. It should be `len(values) - window + 1` to correctly process all valid windows.",
-          "suggestion": "Change `range(len(values) - window)` to `range(len(values) - window + 1)`.",
+          "title": "Incorrect loop range in moving_sums",
+          "explanation": "The loop range uses `len(values) - window`, which stops short and misses the final valid window of consecutive items. It should be `len(values) - window + 1`.",
+          "suggestion": "Change `for i in range(len(values) - window):` to `for i in range(len(values) - window + 1):`",
           "confidence": 0.99
         }
       ]
@@ -272,9 +272,9 @@
       "tp": 1,
       "fp": 0,
       "fn": 0,
-      "latency_seconds": 1.9690000000118744,
+      "latency_seconds": 1.0939999999827705,
       "prompt_tokens": 914,
-      "completion_tokens": 130,
+      "completion_tokens": 123,
       "cost_usd": null,
       "error": null,
       "findings": [
@@ -284,9 +284,9 @@
           "severity": "major",
           "category": "performance",
           "title": "Query executed inside a loop causing N+1 problem",
-          "explanation": "Executing a database query inside a loop for every row returned by fetch_orders introduces an N+1 query performance issue.",
-          "suggestion": "Use a JOIN query to fetch orders and their corresponding customers in a single database round-trip.",
-          "confidence": 0.99
+          "explanation": "Executing a database query inside a loop for each iteration leads to the N+1 query problem, which can severely degrade performance.",
+          "suggestion": "Join the orders and customers tables in a single query instead of querying inside a loop.",
+          "confidence": 0.95
         }
       ]
     },
@@ -295,9 +295,9 @@
       "tp": 1,
       "fp": 0,
       "fn": 0,
-      "latency_seconds": 2.2030000000086147,
+      "latency_seconds": 1.1410000000032596,
       "prompt_tokens": 876,
-      "completion_tokens": 164,
+      "completion_tokens": 120,
       "cost_usd": null,
       "error": null,
       "findings": [
@@ -306,9 +306,9 @@
           "line": 9,
           "severity": "blocker",
           "category": "security",
-          "title": "SQL injection vulnerability via string formatting",
-          "explanation": "Constructing SQL queries by formatting variables directly into the query string allows for SQL injection attacks if external input is passed.",
-          "suggestion": "Use parameterized queries instead, e.g., conn.execute('SELECT id, name FROM users WHERE name = ?', (name,))",
+          "title": "SQL Injection vulnerability",
+          "explanation": "Building SQL queries by concatenating variables directly allows for SQL injection attacks.",
+          "suggestion": "Use parameterized queries like conn.execute(\"SELECT id, name FROM users WHERE name = ?\", (name,))",
           "confidence": 1.0
         }
       ]
@@ -318,9 +318,9 @@
       "tp": 1,
       "fp": 0,
       "fn": 0,
-      "latency_seconds": 7.0,
+      "latency_seconds": 2.7189999999827705,
       "prompt_tokens": 857,
-      "completion_tokens": 124,
+      "completion_tokens": 161,
       "cost_usd": null,
       "error": null,
       "findings": [
@@ -329,10 +329,10 @@
           "line": 9,
           "severity": "major",
           "category": "bug",
-          "title": "Swallowing exceptions with bare pass",
-          "explanation": "Swallowing all exceptions using pass can hide unexpected errors such as FileNotFoundError vs JSONDecodeError, making debugging difficult.",
-          "suggestion": "Catch only specific exceptions like FileNotFoundError or log the exception before returning the default dict.",
-          "confidence": 0.95
+          "title": "Swallowing exceptions with empty except block",
+          "explanation": "The function catches all exceptions and passes silently without logging or handling, which violates the team rule: 'Do not swallow exceptions with a bare except: or an empty except Exception: pass'.",
+          "suggestion": "Log the exception or catch a specific exception type instead of using pass.",
+          "confidence": 1.0
         }
       ]
     }

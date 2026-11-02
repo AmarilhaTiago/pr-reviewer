@@ -39,6 +39,7 @@ class OpenAICompatibleProvider(LLMProvider):
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.usage = Usage()
+        self.request_seconds = 0.0  # time spent in HTTP calls, excluding throttle waits
         self._api_key = api_key
         self._client = client or httpx.Client(timeout=timeout)
         self._min_interval = min_interval
@@ -98,6 +99,7 @@ class OpenAICompatibleProvider(LLMProvider):
 
     def _post(self, messages: list[dict], schema: type[T]) -> httpx.Response:
         self._throttle()
+        started = self._clock()
         try:
             return self._client.post(
                 f"{self.base_url}/chat/completions",
@@ -110,6 +112,8 @@ class OpenAICompatibleProvider(LLMProvider):
             )
         except httpx.HTTPError as exc:
             raise LLMError(f"network error: {exc}") from exc
+        finally:
+            self.request_seconds += self._clock() - started
 
     def _chat(self, messages: list[dict], schema: type[T]) -> str:
         resp = self._post(messages, schema)

@@ -91,6 +91,7 @@ def run_evals(
             provider.usage.prompt_tokens, provider.usage.completion_tokens, provider.usage.calls
         )
         start = clock()
+        http_before = getattr(provider, "request_seconds", None)
         error = None
         findings: list[Finding] = []
         try:
@@ -101,6 +102,9 @@ def run_evals(
         except LLMError as exc:  # pragma: no cover - the pipeline already absorbs LLMError
             error = str(exc)
         latency = clock() - start
+        if http_before is not None:
+            # Wall time also contains our own rate-limit waits; report the API time only.
+            latency = provider.request_seconds - http_before
         used = Usage(
             provider.usage.prompt_tokens - before.prompt_tokens,
             provider.usage.completion_tokens - before.completion_tokens,
