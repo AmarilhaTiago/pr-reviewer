@@ -59,7 +59,7 @@ How to read the table:
 - Before-change raw JSON is kept in [`evals/results/before-line-numbers/`](evals/results/before-line-numbers) (second run of each model; the first run had the same totals), after-change runs in [`after-line-numbers/`](evals/results/after-line-numbers).
 
 How to read these numbers honestly:
-- **Small, synthetic suite.** 16 cases I wrote myself, each with a single, fairly obvious planted bug, and a case set I also used to tune the prompt. Real PRs are messier, so treat these as a regression baseline, not as a claim about real-world accuracy.
+- **Small, synthetic suite.** 16 cases that I designed and reviewed (first drafts generated with Claude's help), each with a single, fairly obvious planted bug, and a case set I also used to tune the prompt. Real PRs are messier, so treat these as a regression baseline, not as a claim about real-world accuracy.
 - **Two runs per version**, not a statistical sample. LLM output varies between runs.
 - The paid-tier cost is not estimated yet (no verified price table), so the report shows `n/a` for it.
 
@@ -119,7 +119,25 @@ Limitation: pull requests from **forks** do not receive repository secrets, so t
 
 ## 🇧🇷 Resumo em português
 
-Revisor de PR com LLM que roda como GitHub Action: comenta linhas específicas do PR e mantém um comentário-resumo que é atualizado a cada push, sem duplicar. A saída do modelo é validada por schema (com uma nova tentativa em caso de erro), o diff é tratado como dado não confiável, e tokens e custo aparecem no resumo. Há uma suíte de evals (16 casos em PHP e Python) que mede precisão, recall e falsos positivos em dois modelos gratuitos (Gemini e Groq), com custo de US$ 0. Numerar as linhas do diff no prompt melhorou o Groq nas duas rodadas (recall de 85% para 100% e 92%, precisão de 79% para 87% e 86%); no Gemini o resultado foi inconclusivo (recall entre 77% e 100% entre rodadas). Os casos são sintéticos e só há duas rodadas por versão, então os números são uma linha de base, não uma promessa de acerto em PRs reais. Não substitui a revisão humana: ele pega o óbvio para a pessoa focar no que importa. PRs vindos de forks não têm acesso aos secrets, então a action apenas avisa e pula.
+**O que é.** Um revisor de pull requests com LLM que roda como GitHub Action. Ele faz a primeira passada de revisão: comenta linhas específicas do PR e mantém um único comentário-resumo, atualizado a cada push (sem duplicar). Não substitui a revisão humana; pega o óbvio (injeção de SQL, argumento mutável, exceção engolida, consulta dentro de loop) para a pessoa revisora focar em design e intenção.
+
+**Por que existe.** É a versão pública e do zero do fluxo de revisão que uso como tech lead, feita para ser barata de rodar (custo de US$ 0 nos planos gratuitos do Gemini e do Groq) e fácil de confiar nos números.
+
+**Como foi construído**
+- **Saída validada por schema (Pydantic):** se o modelo responde fora do formato, há uma nova tentativa com o erro no prompt; se falhar de novo, só aquele trecho é descartado e a execução continua.
+- **Diff tratado como dado não confiável:** vai entre tags `<diff>` com instrução explícita de ignorar ordens vindas do código revisado.
+- **Pós-processamento:** descarta achados em linhas que não estão no diff, separa os de baixa confiança e junta duplicatas.
+- **Idempotente:** o resumo é atualizado, não repetido, e um achado já comentado não é comentado de novo (validado em PR real, o #41).
+- **Controle de custo:** orçamento de tokens por trecho e por PR; tokens e custo vêm do campo `usage` da API e aparecem no resumo.
+- **Testes:** 102 testes, nenhum chama API real; o CI roda lint, testes e o build do Docker.
+
+**Resultados medidos** (16 casos: 13 com bug plantado e 3 limpos; duas rodadas por versão do prompt):
+- Numerar as linhas do diff no prompt **melhorou o Groq** (`gpt-oss-120b`) nas duas rodadas: recall de 85% para 100% e 92%, precisão de 79% para 87% e 86%. Os erros de número de linha sumiram.
+- No **Gemini** (`3.5-flash-lite`) o resultado é **inconclusivo**: recall de 100% numa rodada e 77% na outra (antes: 92%), variação maior que o efeito da mudança. Nenhum falso positivo nos casos limpos em nenhum dos dois modelos.
+
+**Limites, sem maquiagem.** Os casos são sintéticos, criados e revisados por mim (rascunhos gerados com apoio do Claude), cada um com um bug óbvio, e usei o mesmo conjunto para ajustar o prompt. São duas rodadas por versão, não uma amostra estatística. Portanto os números são uma linha de base de regressão, não uma promessa de acerto em PRs reais. No demo real, a divisão por zero plantada **não** foi detectada. O custo no plano pago ainda não foi estimado (aparece `n/a`). PRs vindos de forks não recebem secrets; a action avisa e pula.
+
+**Próximos passos.** Mais rodadas por modelo, casos mais bagunçados (vários bugs por diff, diffs grandes, mais linguagens), tabela de preços verificada e um provedor Anthropic opcional.
 
 ## License
 
